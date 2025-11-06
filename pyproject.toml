@@ -1,0 +1,17 @@
+[project]
+name = "arch-me-later"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = ["textual>=6.5.0", "typer>=0.20.0"]
+
+[project.scripts]
+archme = "arch_me_later.cli:app"
+
+[build-system]
+requires = ["uv_build>=0.9.4,<0.10.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = ["pytest>=8.4.2", "textual-dev>=1.8.0"]
