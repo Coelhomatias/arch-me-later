@@ -36,7 +36,7 @@ class Logger:
     def configure(
         cls, log_widget: "RichLog", log_dir: Path | None = None
     ) -> logging.Logger:
-        if cls._configured and cls._logger is not None:
+        if (cls._configured and cls._logger) is not None:
             return cls._logger
 
         if log_dir is None:
