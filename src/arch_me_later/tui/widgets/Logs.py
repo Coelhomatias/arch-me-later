@@ -23,7 +23,6 @@ class Logs(Container):
             wrap=True,
         )
         self.log_widget.add_class("logs-widget")
-        # Configure global logger once (idempotent)
         logger.configure(log_widget=self.log_widget, log_dir=Path.cwd() / "logs")
 
     def compose(self) -> ComposeResult:
@@ -31,8 +30,8 @@ class Logs(Container):
 
     def on_mount(self) -> None:
         logger.debug("Logs will appear here...")
-        logger.log("Logs will appear here...")
-        logger.info("Logs will appear here...")
-        logger.status("Logs will appear here...")
-        logger.warning("This is a warning message.")
-        logger.error("This is an error message.")
+        logger.log("Logs [red]will[/] appear here...")
+        logger.info("Logs [green]will[/] appear here...")
+        logger.status("Logs [blue]will[/] appear here...")
+        logger.warning("This is a [yellow]warning message.[/]")
+        logger.error("This is a [red]error message.[/]")

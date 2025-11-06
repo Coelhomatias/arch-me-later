@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from rich.markup import escape
 
+
 if TYPE_CHECKING:
     from textual.widgets import RichLog
 
@@ -36,7 +37,7 @@ class Logger:
     def configure(
         cls, log_widget: RichLog, log_dir: Path | None = None
     ) -> logging.Logger:
-        if (cls._configured and cls._logger) is not None:
+        if cls._configured and cls._logger is not None:
             return cls._logger
 
         if log_dir is None:
@@ -111,11 +112,6 @@ class Logger:
         cls.get().critical(msg, *args, **kwargs)
 
 
-def get_logger(log_widget: "RichLog", log_dir: Path | None = None) -> logging.Logger:
-    """Backward-compatible helper: configure the singleton and return it."""
-    return Logger.configure(log_widget=log_widget, log_dir=log_dir)
-
-
 def _write_log_header(logger: logging.Logger, log_file: Path) -> None:
     # Write a formatted header to the log file only
     header = (
@@ -137,13 +133,20 @@ class ArchMeFileHandler(logging.FileHandler):
         super().__init__(filename, mode, encoding)
 
     def emit(self, record: logging.LogRecord) -> None:
+        # Create a copy to avoid mutating the original record (which goes to other handlers)
         try:
-            message = escape(record.getMessage())
-            record.msg = message
+            original_msg = record.msg
+            original_args = record.args
+            # Escape markup for plain text file output
+            record.msg = escape(record.getMessage())
             record.args = None
+            super().emit(record)
         except Exception:
-            pass
-        super().emit(record)
+            super().emit(record)
+        finally:
+            # Restore original so other handlers get unescaped markup
+            record.msg = original_msg
+            record.args = original_args
 
 
 class ArchMeWidgetHandler(logging.Handler):
@@ -152,22 +155,12 @@ class ArchMeWidgetHandler(logging.Handler):
         self.log_widget = log_widget
 
     def emit(self, record: logging.LogRecord) -> None:
-        log_entry = self.format(record)
-        if self.log_widget:
-            app = getattr(self.log_widget, "app", None)
-            if not app:
-                return
-            try:
-                import threading
-
-                if hasattr(app, "_thread_id") and threading.get_ident() != getattr(
-                    app, "_thread_id"
-                ):
-                    app.call_from_thread(self.log_widget.write, log_entry)
-                else:
-                    self.log_widget.write(log_entry)
-            except Exception:
+        try:
+            log_entry = self.format(record)
+            if self.log_widget:
                 self.log_widget.write(log_entry)
+        except Exception:
+            self.handleError(record)
 
     def format(self, record: logging.LogRecord) -> str:
         msg = record.getMessage()
