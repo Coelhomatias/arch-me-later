@@ -1,0 +1,20 @@
+.progress-bar-container {
+    height: 1;
+    width: 100%;
+    background: $surface;
+}
+
+.progress-bar {
+    width: 100%;
+    padding: 0 1;
+}
+
+.progress-bar #bar {
+    width: 4fr;
+}
+
+.progress-bar #percentage {
+    width: 1fr;
+    max-width: 4;
+    margin-left: 1;
+}

@@ -1,0 +1,16 @@
+ArchFooter {
+    dock: bottom;
+    height: 1;
+}
+
+.footer {
+    background: $background;
+    color: $foreground;
+}
+
+
+
+
+
+
+

@@ -1,0 +1,5 @@
+.pane {
+    border: round $primary;
+    padding: 1 2;
+    content-align: center top;
+}

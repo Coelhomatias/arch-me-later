@@ -1,0 +1,11 @@
+.logs-container {
+}
+
+#log-display {
+    border: none;
+    background: $background;
+}
+
+#log-display:focus {
+    background: $background;
+}

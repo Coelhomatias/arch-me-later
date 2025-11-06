@@ -1,0 +1,15 @@
+ArchHeader {
+    dock: top;
+    height: 1;
+}
+
+.header {
+    background: $background;
+    color: $text;
+}
+
+
+
+
+
+
