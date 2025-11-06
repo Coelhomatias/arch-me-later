@@ -10,4 +10,8 @@ wheels/
 .venv
 
 # IDE settings
-.vscode/
+.vscode
+
+# Logs
+/logs/
+*.log

@@ -4,9 +4,8 @@ from pathlib import Path
 
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal
-from textual.widgets import Static
 
-from arch_me_later.tui.widgets import Footer, Header, Pane, Plan, ProgressBar
+from arch_me_later.tui.widgets import Footer, Header, Pane, Plan, ProgressBar, Logs
 
 STYLES_DIR: Path = Path(__file__).parent / "styles"
 STYLES: list[str] = [str(file) for file in STYLES_DIR.glob("*.tcss")]
@@ -29,7 +28,7 @@ class ArchMeLaterTUI(App):
                 yield Plan()
                 yield ProgressBar()
             with Pane(border_title="Logs"):
-                yield Static("Logs will appear here...")
+                yield Logs()
         yield Footer()
 
     def on_mount(self) -> None:
