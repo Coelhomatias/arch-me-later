@@ -34,7 +34,7 @@ class Logger:
 
     @classmethod
     def configure(
-        cls, log_widget: "RichLog", log_dir: Path | None = None
+        cls, log_widget: RichLog, log_dir: Path | None = None
     ) -> logging.Logger:
         if (cls._configured and cls._logger) is not None:
             return cls._logger
