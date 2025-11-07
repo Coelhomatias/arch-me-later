@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from textual.containers import Container
@@ -23,12 +22,13 @@ class Logs(Container):
             wrap=True,
         )
         self.log_widget.add_class("logs-widget")
-        logger.configure(log_widget=self.log_widget, log_dir=Path.cwd() / "logs")
 
     def compose(self) -> ComposeResult:
         yield self.log_widget
 
     def on_mount(self) -> None:
+        # Register the RichLog with the global logger once the widget is ready
+        logger.register_rich_log(self.log_widget)
         logger.debug("Logs will appear here...")
         logger.log("Logs [red]will[/] appear here...")
         logger.info("Logs [green]will[/] appear here...")

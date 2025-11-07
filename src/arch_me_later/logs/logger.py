@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 
 from rich.markup import escape
 
-
 if TYPE_CHECKING:
     from textual.widgets import RichLog
 
@@ -24,36 +23,42 @@ class LogLevel(IntEnum):
 
 
 class Logger:
-    """Project-wide singleton logger.
-
-    Configure once with a Textual RichLog widget and optional log directory,
-    then call Logger.info/debug/... anywhere without creating new objects.
-    """
+    """Project-wide singleton logger with late RichLog registration support."""
 
     _logger: logging.Logger | None = None
     _configured: bool = False
 
     @classmethod
     def configure(
-        cls, log_widget: RichLog, log_dir: Path | None = None
+        cls, log_widget: "RichLog | None" = None, log_dir: Path | None = None
     ) -> logging.Logger:
-        if cls._configured and cls._logger is not None:
-            return cls._logger
+        """Configure the application logger.
 
-        if log_dir is None:
-            log_dir = Path.home() / ".local" / "state" / "arch_me_later" / "logs"
-        log_dir.mkdir(parents=True, exist_ok=True)
-        log_file: Path = log_dir / f"{datetime.now().strftime('%Y%m%d-%H%M%S')}.log"
+        Can be called early (without a widget) to set up file logging,
+        and later a RichLog widget can be registered via `register_rich_log`.
+        If a widget is provided here, it will be attached as well.
+        """
 
+        # Ensure custom levels are registered every time; harmless if repeated
         logging.addLevelName(LogLevel.LOG, "LOG")
         logging.addLevelName(LogLevel.STATUS, "STATUS")
 
-        logger: logging.Logger = logging.getLogger("arch_me_later")
+        # Create or reuse the logger singleton
+        logger: logging.Logger = (
+            cls._logger
+            if cls._logger is not None
+            else logging.getLogger("arch_me_later")
+        )
         logger.setLevel(LogLevel.DEBUG)
         logger.propagate = False
 
-        # File handler (add once)
+        # Ensure file handler exists (create log directory/file lazily)
+        if log_dir is None:
+            log_dir = Path.home() / ".local" / "state" / "arch_me_later" / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        # Only create a new file handler once per process
         if not any(isinstance(h, ArchMeFileHandler) for h in logger.handlers):
+            log_file: Path = log_dir / f"{datetime.now().strftime('%Y%m%d-%H%M%S')}.log"
             file_handler: ArchMeFileHandler = ArchMeFileHandler(log_file)
             file_formatter = logging.Formatter(
                 fmt="[{asctime}][{levelname}] {message}",
@@ -65,17 +70,37 @@ class Logger:
             logger.addHandler(file_handler)
             _write_log_header(logger, log_file)
 
-        # Widget handler (replace existing to point to current widget)
+        # Optionally attach a RichLog widget handler now
+        if log_widget is not None:
+            cls._attach_widget_handler(logger, log_widget)
+
+        cls._logger = logger
+        cls._configured = True
+        return logger
+
+    @classmethod
+    def register_rich_log(cls, log_widget: RichLog) -> None:
+        """Register or replace the RichLog handler after widget initialization.
+
+        Safe to call multiple times; the previous widget handler will be replaced.
+        Automatically configures the logger (file handler) if not done yet.
+        """
+        # Ensure base config exists
+        if not cls._configured or cls._logger is None:
+            cls.configure(log_widget=None)
+
+        assert cls._logger is not None  # for type checkers
+        cls._attach_widget_handler(cls._logger, log_widget)
+
+    @staticmethod
+    def _attach_widget_handler(logger: logging.Logger, log_widget: RichLog) -> None:
+        # Remove any existing widget handlers to avoid duplicates
         for h in list(logger.handlers):
             if isinstance(h, ArchMeWidgetHandler):
                 logger.removeHandler(h)
         widget_handler: ArchMeWidgetHandler = ArchMeWidgetHandler(log_widget)
         widget_handler.setLevel(LogLevel.LOG)
         logger.addHandler(widget_handler)
-
-        cls._logger = logger
-        cls._configured = True
-        return logger
 
     @classmethod
     def get(cls) -> logging.Logger:
