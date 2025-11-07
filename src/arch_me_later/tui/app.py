@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from textual import work
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal
 
@@ -36,6 +37,22 @@ class ArchMeLaterTUI(App):
     def on_mount(self) -> None:
         """Actions to perform when the app is mounted."""
         self.theme = "tokyo-night"
+
+        # Find modules
+        self.modules = self._discover_modules()
+
+    def _discover_modules(self) -> list[Path]:
+        """Discover available modules."""
+        modules_dir = Path.cwd() / "modules"
+        module_paths = list(modules_dir.rglob("*.sh"))
+        logger.info(f"Discovered {len(module_paths)} modules.")
+        return module_paths
+
+    @work(exclusive=True)
+    async def run_modules(self) -> None:
+        """Run modules asynchronously."""
+
+        pass
 
 
 def run() -> None:
